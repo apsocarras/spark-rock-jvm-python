@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.9, <4.0"
 
 [[package]]
@@ -904,6 +905,7 @@ version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "beartype" },
+    { name = "py4j" },
     { name = "pyspark" },
 ]
 
@@ -923,6 +925,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beartype", specifier = ">=0.20.0" },
+    { name = "py4j", specifier = ">=0.10.9.7" },
     { name = "pyspark", specifier = ">=3.5.4" },
 ]
 

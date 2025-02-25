@@ -19,6 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "beartype>=0.20.0",
+    "py4j>=0.10.9.7",
     "pyspark>=3.5.4",
 ]
 
