@@ -1,0 +1,52 @@
+site_name: spark-rock-jvm-python
+repo_url: https://github.com/apsocarras/spark-rock-jvm-python
+site_url: https://apsocarras.github.io/spark-rock-jvm-python
+site_description: Rock the JVM Spark Series (Using PySpark)
+site_author: Alexander Socarras
+edit_uri: edit/main/docs/
+repo_name: apsocarras/spark-rock-jvm-python
+copyright: Maintained by <a href="https://apsocarras.com">apsocarras</a>.
+
+nav:
+  - Home: index.md
+  - Modules: modules.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["src/spark_rock_jvm_python"]
+theme:
+  name: material
+  feature:
+    tabs: true
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/apsocarras/spark-rock-jvm-python
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/spark-rock-jvm-python
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
