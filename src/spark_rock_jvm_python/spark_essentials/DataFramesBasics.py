@@ -12,8 +12,8 @@ spark = (
 
 # reading a dataframe
 if path := resource_path("numbers.csv"):
-    first_df = spark.read.format("csv").load(path)  # pyright: ignore[reportArgumentType]
+    first_df = spark.read.format("csv").load(str(path))
 else:
     first_df = None
 if __name__ == "__main__":
-    print(first_df)
+    print(first_df.show() if first_df else first_df)
