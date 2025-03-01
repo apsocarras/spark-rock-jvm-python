@@ -13,7 +13,7 @@ e.g.
 from pyspark.sql import SparkSession
 from pyspark.sql.types import LongType
 
-from spark_rock_jvm_python.resources import resource_path
+from spark_rock_jvm_python.resources.utils import resource_path
 
 
 def main() -> None:
