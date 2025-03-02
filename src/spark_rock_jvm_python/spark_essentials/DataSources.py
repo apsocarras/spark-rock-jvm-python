@@ -14,17 +14,20 @@ Writing DFs
 
 Note that dataframes are written as directories with multiple files; the number of files depends on the size of the dataframe and the partitioning settings
 
+NOTE: PySpark Dates follow Java's SimpleDateFormat syntax: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
 """
 
 import logging
 import os
 
+import click
 from py4j.protocol import Py4JJavaError
 from pyspark.sql.functions import col, date_format
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import (
     DateType,
     DoubleType,
+    FloatType,
     LongType,
     StringType,
     StructField,
@@ -40,26 +43,22 @@ from spark_rock_jvm_python.resources.utils import (
 logger = logging.getLogger(__name__)
 
 
-def main():
-    spark = (
-        SparkSession.Builder()
-        .appName("Data Sources and Formats")
-        .config("spark.master", "local")
-        .getOrCreate()
-    )
+CARS_SCHEMA = StructType([
+    StructField("Name", StringType()),
+    StructField("Miles_per_Gallon", DoubleType()),
+    StructField("Cylinders", LongType()),
+    StructField("Displacement", DoubleType()),
+    StructField("Horsepower", LongType()),
+    StructField("Weight_in_lbs", LongType()),
+    StructField("Acceleration", DoubleType()),
+    StructField("Year", DateType()),
+    StructField("Origin", StringType()),
+])
 
-    car_schema = StructType([
-        StructField("Name", StringType()),
-        StructField("Miles_per_Gallon", DoubleType()),
-        StructField("Cylinders", LongType()),
-        StructField("Displacement", DoubleType()),
-        StructField("Horsepower", LongType()),
-        StructField("Weight_in_lbs", LongType()),
-        StructField("Acceleration", DoubleType()),
-        StructField("Year", DateType()),
-        StructField("Origin", StringType()),
-    ])
 
+def working_with_json(spark: SparkSession):
+    global CARS_SCHEMA
+    car_schema = CARS_SCHEMA
     cars_json = resource_path("cars.json")
 
     ## Reading data w/ mode
@@ -162,6 +161,109 @@ def main():
     cars_DF_date_changed_load.show()
 
     ## You can replace .format('json') and .load() with a single '.json()' call at the end
+
+
+def working_with_csv(spark: SparkSession):
+    """
+    CSV Flags: Many, but the most important:
+        - "header": "true",
+        - "sep":',',
+        - "nullValue": "",
+    """
+
+    stocks_schema = StructType([
+        StructField("symbol", StringType(), nullable=False),
+        StructField("date", DateType(), nullable=False),
+        StructField("price", FloatType(), nullable=False),
+    ])
+
+    stocks_csv = resource_path("stocks.csv")
+    option_map = {
+        "dateFormat": "MMM d yyyy",
+    }
+    csv_option_map = {
+        "header": "true",
+        "sep": ",",
+        "nullValue": "",
+    }
+    stocks_DF = (
+        spark.read.schema(stocks_schema)
+        .options(**{**csv_option_map, **option_map})
+        .csv(str(stocks_csv))
+    )
+    stocks_DF.show()
+
+
+def working_with_parquet(spark: SparkSession):
+    print("Read cars_DF from earlier and write to parquet")
+    global CARS_SCHEMA
+    cars_json = resource_path("cars.json")
+    outpath = write_path("cars_DF.parquet")
+
+    # fmt: off
+    cars_DF = spark.read \
+        .json(str(cars_json), schema=CARS_SCHEMA)
+
+    cars_DF.write \
+        .mode("overwrite") \
+        .parquet(str(outpath))  # or just .save() <-- .parquet is default spark format
+    # fmt: on
+
+    print_write_path_contents(outpath, indent=4)
+
+
+def working_with_text(spark: SparkSession):
+    sample_text_txt = resource_path("sample_text.txt")
+
+    spark.read.text(str(sample_text_txt)).show()
+
+
+@click.command(help="If no flags provided, will run all lessons")
+@click.option(
+    "--json", "-j", is_flag=True, default=None, help="Whether to run json lesson"
+)
+@click.option(
+    "--csv", "-c", is_flag=True, default=None, help="Whether to run csv lesson"
+)
+@click.option(
+    "--parquet", "-p", is_flag=True, default=None, help="Whether to run parquet lesson"
+)
+@click.option(
+    "--text", "-t", is_flag=True, default=None, help="Whether to run text lesson"
+)
+def main(
+    json: bool | None = None,
+    csv: bool | None = None,
+    parquet: bool | None = None,
+    text: bool | None = None,
+):
+    spark: SparkSession = (
+        SparkSession.Builder()
+        .appName("Data Sources and Formats")
+        .config("spark.master", "local")
+        .getOrCreate()
+    )
+    if all(x is None for x in (json, csv, parquet, text)):
+        json = True
+        csv = True
+        parquet = True
+        text = True
+
+    if json:
+        logger.info("Running lesson for json")
+        working_with_json(spark)
+
+    if csv:
+        logger.info("Running lesson for csv")
+        working_with_csv(spark)
+
+    if parquet:
+        logger.info("Running lesson for parquet")
+        working_with_parquet(spark)
+
+    if text:
+        logger.info("Running lesson for text")
+        working_with_text(spark)
 
 
 if __name__ == "__main__":

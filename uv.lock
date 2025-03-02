@@ -1390,6 +1390,7 @@ source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
     { name = "beartype" },
+    { name = "click" },
     { name = "py4j" },
     { name = "pyspark" },
     { name = "pyyaml" },
@@ -1413,6 +1414,7 @@ dev = [
 requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
     { name = "beartype", specifier = ">=0.20.0" },
+    { name = "click", specifier = ">=8.1.8" },
     { name = "py4j", specifier = ">=0.10.9.7" },
     { name = "pyspark", specifier = ">=3.5.4" },
     { name = "pyyaml", specifier = ">=6.0.2" },
