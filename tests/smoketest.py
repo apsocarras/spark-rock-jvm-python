@@ -2,7 +2,7 @@ from pyspark.sql.session import SparkSession
 
 from spark_rock_jvm_python.config import setup_config
 
-setup_config()e
+setup_config()
 
 
 spark = (
