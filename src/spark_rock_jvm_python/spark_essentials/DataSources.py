@@ -19,7 +19,7 @@ NOTE: PySpark Dates follow Java's SimpleDateFormat syntax: https://docs.oracle.c
 
 import logging
 import os
-from typing import Never
+from typing import Never, TypedDict
 
 import click
 from py4j.protocol import Py4JJavaError
@@ -30,6 +30,7 @@ from pyspark.sql.types import (
     DateType,
     DoubleType,
     FloatType,
+    IntegerType,
     LongType,
     StringType,
     StructField,
@@ -233,6 +234,86 @@ def working_with_remote_db(spark: SparkSession) -> None:
     employees_DF.show()
 
 
+def lesson_exercises(spark: SparkSession) -> None:
+    print("""Exercise: read the movies DF, then write it as
+    * - tab-separated values file
+    * - snappy Parquet
+    * - table "public.movies" in the Postgres DB
+    """)
+    movies_schema = StructType([
+        StructField(name="Title", dataType=StringType()),
+        StructField(name="US_Gross", dataType=LongType()),
+        StructField(name="Worldwide_Gross", dataType=LongType()),
+        StructField(name="US_DVD_Sales", dataType=LongType()),
+        StructField(name="Production_Budget", dataType=LongType()),
+        StructField(name="Release_Date", dataType=DateType()),
+        StructField(name="MPAA_Rating", dataType=StringType()),
+        StructField(name="Running_Time_min", dataType=IntegerType()),
+        StructField(name="Distributor", dataType=StringType()),
+        StructField(name="Source", dataType=StringType()),
+        StructField(name="Major_Genre", dataType=StringType()),
+        StructField(name="Creative_Type", dataType=StringType()),
+        StructField(name="Director", dataType=StringType()),
+        StructField(name="Rotten_Tomatoes_Rating", dataType=IntegerType()),
+        StructField(name="IMDB_Rating", dataType=FloatType()),
+        StructField(name="IMDB_Votes", dataType=IntegerType()),
+    ])
+    movies_json = resource_path("movies.json")
+    movies_DF = spark.read.json(
+        str(movies_json), schema=movies_schema, dateFormat="dd MMM yy"
+    )
+    movies_DF.limit(2).show(vertical=True)
+
+    # Write to tab-separated file
+    movies_tab_sep_path = write_path("movies_tab_sep.tsv")
+    # fmt: off
+    movies_DF.write.csv(
+        str(movies_tab_sep_path),
+        nullValue="",
+        header=True,
+        sep="\t",
+        mode="overwrite",
+        dateFormat="dd MMM yy"
+    )
+    # fmt: on
+
+    # Write to parquet
+    movies_parquet_path = write_path("movies.parquet")
+    movies_DF.write.parquet(path=str(movies_parquet_path), mode="overwrite")
+
+    # Write to table "public.movies" in the Postgres DB
+    class JdbcOptions(TypedDict):
+        driver: str
+        url: str
+        user: str
+        password: str
+        dbtable: str
+
+    jbdc_options: JdbcOptions = {
+        "driver": "org.postgresql.Driver",
+        "url": "jdbc:postgresql://localhost:5432/rtjvm",
+        "user": "docker",
+        "password": "docker",
+        "dbtable": "public.movies",
+    }
+
+    (
+        movies_DF.write.format("jdbc")
+        .options(**jbdc_options)  # pyright: ignore[reportArgumentType]
+        .mode("overwrite")
+        .save()  # or .save(mode="overwrite")
+    )
+
+    movies_DF_from_db = (
+        spark.read.format("jdbc")
+        .schema(movies_schema)
+        .option("dateFormat", "dd MMM yy")
+        .options(**jbdc_options)  # pyright: ignore[reportArgumentType])
+        .load()
+    )
+    movies_DF_from_db.limit(2).show(vertical=True)
+
+
 @click.command(help="If no flags provided, will run all lessons")
 @click.option(
     "--json", "-j", is_flag=True, default=None, help="Whether to run json lesson"
@@ -249,12 +330,20 @@ def working_with_remote_db(spark: SparkSession) -> None:
 @click.option(
     "--db", is_flag=True, default=None, help="Whether to run remote_database lesson"
 )
+@click.option(
+    "--exercises",
+    "-ex",
+    is_flag=True,
+    default=None,
+    help="Whether to run lesson_exercises",
+)
 def main(
     json: bool | None = None,
     csv: bool | None = None,
     parquet: bool | None = None,
     text: bool | None = None,
     db: bool | None = None,
+    exercises: bool | None = None,
 ):
     spark: SparkSession = (
         SparkSession.Builder()
@@ -263,12 +352,13 @@ def main(
         .config("spark.jars", "/Users/alex/Downloads/postgresql-42.7.5.jar")
         .getOrCreate()
     )
-    if all(x is None for x in (json, csv, parquet, text, db)):
+    if all(x is None for x in (json, csv, parquet, text, db, exercises)):
         json = True
         csv = True
         parquet = True
         text = True
         db = True
+        exercises = True
 
     if json:
         logger.info("Running lesson for json")
@@ -289,6 +379,10 @@ def main(
     if db:
         logger.info("Running lesson for remote database")
         working_with_remote_db(spark)
+
+    if exercises:
+        logger.info("Running lesson exercises")
+        lesson_exercises(spark)
 
 
 if __name__ == "__main__":
