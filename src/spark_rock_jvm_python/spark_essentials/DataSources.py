@@ -11,7 +11,13 @@ Writing DFs
     - save mode = overwrite, append, ignore, errorIfExists
     - path
     - zero or more options
+
+Note that dataframes are written as directories with multiple files; the number of files depends on the size of the dataframe and the partitioning settings
+
 """
+
+import logging
+import os
 
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import (
@@ -23,7 +29,13 @@ from pyspark.sql.types import (
     StructType,
 )
 
-from spark_rock_jvm_python.resources.utils import resource_path, write_path
+from spark_rock_jvm_python.resources.utils import (
+    print_write_path_contents,
+    resource_path,
+    write_path,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -74,6 +86,11 @@ def main():
         .load()
     # fmt: on
     cars_DF_dupe.show(2)
+    # Note that when writing dataframes with spark, a folder is created with multiple files
+    print(
+        f"Written dataframe {os.path.basename(out_path)} is a directory: {out_path.is_dir()}"
+    )
+    print_write_path_contents(out_path, indent=4)
 
 
 if __name__ == "__main__":

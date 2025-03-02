@@ -83,6 +83,15 @@ def write_path(file_name: str, /) -> Path:
     return write_dir / file_name
 
 
+def print_write_path_contents(file: str | Path, /, indent=0) -> None:
+    """Note that when writing dataframes with spark, a folder is created with multiple files"""
+    written_path = write_path(file) if isinstance(file, str) else file
+    if not (written_path).exists():
+        raise NotADirectoryError(write_path)
+    for f in os.listdir(written_path):
+        print(" " * indent + f)
+
+
 def list_expected_resource_files() -> tuple[Traversable, ...]:
     """Lists the expected source example files in the data directory."""
     data_dir = get_data_dir()
