@@ -24,8 +24,8 @@ def test_update_path_and_env(default_config: Config) -> None:
     spark_python_path = Path(default_config.SPARK_HOME) / "python"
     py4j_path = next((spark_python_path / "lib").glob("py4j*"), None)
 
-    logger.debug(sys.path.index(str(spark_python_path)))
-    logger.debug(sys.path.index(str(py4j_path)))
+    logger.debug("SPARK_HOME/python:" + str(sys.path.index(str(spark_python_path))))
+    logger.debug("PY4J:" + str(sys.path.index(str(py4j_path))))
 
 
 def test_run_spark_session(default_config: Config) -> None:

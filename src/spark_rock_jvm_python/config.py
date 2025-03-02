@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 from collections.abc import Mapping, Sequence
-from dataclasses import Field, dataclass, field, fields
+from dataclasses import Field, asdict, dataclass, field, fields
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -50,7 +50,7 @@ class Config(AnnotatedDataClassMixin):
 
     JAVA_HOME: str = field(metadata={"example": "/opt/homebrew/opt/openjdk@17"})
     SPARK_HOME: str = field(
-        metadata={"example": "/opt/homebrew/opt/apache-spark/libexe"}
+        metadata={"example": "/opt/homebrew/opt/apache-spark/libexec"}
     )
     PYSPARK_PYTHON: str = field(metadata={"example": "python3"})
 
@@ -120,6 +120,8 @@ def load_config(config_file_path: Path = CONFIG_FILE_PATH) -> Config:
 def update_path_and_env(config: Config) -> None:
     """Add the env vars to the system PATH"""
 
+    os.environ["PYSPARK_PYTHON"] = config.PYSPARK_PYTHON
+
     ## Set JAVA_HOME and SPARK_HOME
     def update_var(var_name: str) -> None:
         os.environ[var_name] = (config_val := getattr(config, var_name))
@@ -131,15 +133,12 @@ def update_path_and_env(config: Config) -> None:
 
     ## Add PySpark to Python Path
     spark_python_path = Path(config.SPARK_HOME) / "python"
-    py4j_path = next((spark_python_path / "lib").glob("py4j*.zip"), None)
-    if py4j_path:
-        spark_python_paths = [str(spark_python_path), str(py4j_path)]
-        for path in spark_python_paths:
-            if path not in sys.path:
-                sys.path.insert(0, path)
-
-    ## Set Python executable for PySpark
-    os.environ["PYSPARK_PYTHON"] = config.PYSPARK_PYTHON
+    py4j_path = next((spark_python_path / "lib").glob("py4j*"), None)
+    logger.debug(spark_python_path)
+    logger.debug(py4j_path)
+    if spark_python_path not in sys.path:
+        sys.path.append(str(spark_python_path))
+        sys.path.append(str(py4j_path))
 
 
 def setup_config(config_path: Path = CONFIG_FILE_PATH):
@@ -147,5 +146,8 @@ def setup_config(config_path: Path = CONFIG_FILE_PATH):
     update_path_and_env(config)
 
 
-if __name__ == "__main__":
-    setup_config()
+def update_config_file(config: Config) -> None:
+    if not CONFIG_DIR.exists():
+        CONFIG_DIR.mkdir()
+    with open(CONFIG_FILE_PATH, "w") as file:
+        yaml.dump(asdict(config), file)
