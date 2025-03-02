@@ -55,7 +55,7 @@ def make_data_dir_read_only() -> None:
     data_dir = Path(str(get_data_dir()))
     for root, dirs, files in os.walk(data_dir):
         for d in dirs:
-            os.chmod(os.path.join(root, d), 0o555)
+            os.chmod(os.path.join(root, d), 0o500)
         for f in files:
             os.chmod(os.path.join(root, f), 0o444)
 
@@ -67,11 +67,11 @@ def get_writes_dir() -> Path:
 
 
 def resource_path(resource: ResourceFile) -> Path:
-    dir = get_data_dir()
-    if (traversable := dir / resource).is_file():
+    _dir = get_data_dir()
+    if (traversable := _dir / resource).is_file():
         return Path(str(traversable))
     elif resource == "yellow_taxi_jan_25_2018":
-        return Path(str(dir / resource))
+        return Path(str(_dir / resource))
     else:
         raise FileNotFoundError(traversable)
 

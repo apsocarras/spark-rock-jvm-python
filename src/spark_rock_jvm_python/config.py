@@ -72,6 +72,27 @@ CONFIG_DIR = Path(appdirs.user_config_dir(APP_NAME))
 CONFIG_FILE_PATH = Path(os.path.join(CONFIG_DIR, "config.yaml"))
 
 
+def _load_env_from_config(
+    config_dict: dict[str, str], config_file_path: Path
+) -> dict[str, str]:
+    with open(file=config_file_path) as file:
+        user_config: dict[str, str] = yaml.safe_load(file)
+        if user_config:
+            fields_keep: dict[str, str] = {}
+            extra_fields: dict[str, str] = {}
+            for k, v in user_config.items():
+                if k not in Config.__dataclass_fields__:
+                    logger.debug(f"Extra field: {k}")
+                    extra_fields[k] = v
+                else:
+                    fields_keep[k] = v
+            if extra_fields:
+                warnings.warn(ExtraVars(list(extra_fields.keys())), stacklevel=1)
+
+            config_dict.update(fields_keep)
+    return config_dict
+
+
 def load_config(config_file_path: Path = CONFIG_FILE_PATH) -> Config:
     """
     First checks if the configuration file path exists; if yes, it loads the environment variables from that file.
@@ -81,21 +102,9 @@ def load_config(config_file_path: Path = CONFIG_FILE_PATH) -> Config:
     config = {}
     if config_file_path.exists():
         logger.debug(f"Loading env variables from config file: {config_file_path}")
-        with open(config_file_path) as file:
-            user_config: dict[str, str] = yaml.safe_load(file)
-            if user_config:
-                fields_keep: dict[str, str] = {}
-                extra_fields: dict[str, str] = {}
-                for k, v in user_config.items():
-                    if k not in Config.__dataclass_fields__:
-                        logger.debug(f"Extra field: {k}")
-                        extra_fields[k] = v
-                    else:
-                        fields_keep[k] = v
-                if extra_fields:
-                    warnings.warn(ExtraVars(list(extra_fields.keys())))
-
-                config.update(fields_keep)
+        config = _load_env_from_config(
+            config_dict=config, config_file_path=config_file_path
+        )
     else:
         if config_file_path == CONFIG_FILE_PATH:
             logger.info(
@@ -103,7 +112,8 @@ def load_config(config_file_path: Path = CONFIG_FILE_PATH) -> Config:
             )
         else:
             warnings.warn(
-                f"Custom config file path {config_file_path} does not exist. Create a config at {CONFIG_FILE_PATH} to configure environment variables for PySpark across sessions."
+                f"Custom config file path {config_file_path} does not exist. Create a config at {CONFIG_FILE_PATH} to configure environment variables for PySpark across sessions.",
+                stacklevel=1,
             )
 
     missing_fields = []

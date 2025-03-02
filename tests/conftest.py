@@ -9,7 +9,7 @@ from spark_rock_jvm_python.config import (
     Config,
 )
 
-from . import logging_config
+from . import logging_config  # noqa: F401 # pyright: ignore[reportUnusedImport]
 
 
 @pytest.fixture
@@ -71,6 +71,3 @@ def default_config_path(tmp_path, default_config) -> Path:
     with open(path := tmp_path / "default_config.yaml", "w") as file:
         json.dump(asdict(default_config), file)
     return path
-
-
-logging_config

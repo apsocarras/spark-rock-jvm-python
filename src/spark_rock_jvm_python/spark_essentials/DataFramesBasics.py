@@ -95,10 +95,9 @@ def main() -> None:
     cars_df_schema = first_df.schema
 
     ## reading a dataframe with explicit schema
-    cars_df_with_schema = (
+    cars_df_with_schema = (  # noqa: F841 # pyright: ignore[reportUnusedVariable]
         spark.read.format("json").schema(cars_df_schema).load(str(cars_json))
     )
-
     # Create rows manual (only really useful for testing)
     # my_row = Row("chevy malibu", 18, 8, 301, 130, 2504, 12.0, "1970-01-01", "USA")
 
@@ -116,7 +115,7 @@ def main() -> None:
         ("amc ambassador dpl", 15, 8, 390, 190, 3850, 8.5, "1970-01-01", "USA"),
     )
 
-    car_rows_manual_df = spark.createDataFrame(car_rows, schema=cars_schema)
+    car_rows_manual_df = spark.createDataFrame(car_rows, schema=cars_schema)  # noqa: F841 # pyright: ignore[reportUnusedVariable, reportUnknownMemberType]
 
     ## EXERCISES ##
     # Exercise:
@@ -142,7 +141,7 @@ def main() -> None:
         ("microsoft", "windows phone 1", 620.2, 7.6),
         # ("microsoft", "windows phone 1", 620, 7.6) <-- Would cause a type error
     )
-    smartphones_df_manual: DataFrame = spark.createDataFrame(
+    smartphones_df_manual: DataFrame = spark.createDataFrame(  # pyright: ignore[reportUnknownMemberType]
         smartphone_df_data, schema=smartphone_df_schema
     )
 

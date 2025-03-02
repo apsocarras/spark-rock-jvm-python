@@ -19,9 +19,11 @@ NOTE: PySpark Dates follow Java's SimpleDateFormat syntax: https://docs.oracle.c
 
 import logging
 import os
+from typing import Never
 
 import click
 from py4j.protocol import Py4JJavaError
+from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.functions import col, date_format
 from pyspark.sql.session import SparkSession
 from pyspark.sql.types import (
@@ -56,7 +58,7 @@ CARS_SCHEMA = StructType([
 ])
 
 
-def working_with_json(spark: SparkSession):
+def working_with_json(spark: SparkSession) -> None:
     global CARS_SCHEMA
     car_schema = CARS_SCHEMA
     cars_json = resource_path("cars.json")
@@ -135,7 +137,7 @@ def working_with_json(spark: SparkSession):
         .load()
     )
 
-    def wrong_date_format_should_fail():
+    def wrong_date_format_should_fail() -> Never:
         raise AssertionError('Uhhh?')
     try:
         cars_DF_date_changed_load.show()
@@ -151,7 +153,7 @@ def working_with_json(spark: SparkSession):
         'allowSingleQuotes': "true",
         'compression': 'uncompressed' # bzip2, gzip, lz4, snappy, deflate, default: uncompressed
     }
-    cars_DF_date_changed_load = (
+    cars_DF_date_changed_load: DataFrame = (
         spark.read
         .format('json')
         .schema(car_schema)
@@ -163,7 +165,7 @@ def working_with_json(spark: SparkSession):
     ## You can replace .format('json') and .load() with a single '.json()' call at the end
 
 
-def working_with_csv(spark: SparkSession):
+def working_with_csv(spark: SparkSession) -> None:
     """
     CSV Flags: Many, but the most important:
         - "header": "true",
@@ -181,7 +183,7 @@ def working_with_csv(spark: SparkSession):
     option_map = {
         "dateFormat": "MMM d yyyy",
     }
-    csv_option_map = {
+    csv_option_map: dict[str, str] = {
         "header": "true",
         "sep": ",",
         "nullValue": "",
@@ -194,7 +196,7 @@ def working_with_csv(spark: SparkSession):
     stocks_DF.show()
 
 
-def working_with_parquet(spark: SparkSession):
+def working_with_parquet(spark: SparkSession) -> None:
     print("Read cars_DF from earlier and write to parquet")
     global CARS_SCHEMA
     cars_json = resource_path("cars.json")
@@ -212,13 +214,13 @@ def working_with_parquet(spark: SparkSession):
     print_write_path_contents(outpath, indent=4)
 
 
-def working_with_text(spark: SparkSession):
+def working_with_text(spark: SparkSession) -> None:
     sample_text_txt = resource_path("sample_text.txt")
 
     spark.read.text(str(sample_text_txt)).show()
 
 
-def working_with_remote_db(spark: SparkSession):
+def working_with_remote_db(spark: SparkSession) -> None:
     print("Ensure your docker postgres container is running")
     jbdc_options = {
         "driver": "org.postgresql.Driver",
@@ -227,7 +229,7 @@ def working_with_remote_db(spark: SparkSession):
         "password": "docker",
         "dbtable": "public.employees",
     }
-    employees_DF = spark.read.format("jdbc").options(**jbdc_options).load()
+    employees_DF: DataFrame = spark.read.format("jdbc").options(**jbdc_options).load()
     employees_DF.show()
 
 

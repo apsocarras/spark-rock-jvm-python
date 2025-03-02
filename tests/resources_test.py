@@ -17,7 +17,7 @@ from spark_rock_jvm_python.resources.utils import (
 def test_get_data_dir() -> None:
     data_dir = get_data_dir()
     assert data_dir.is_dir()
-    assert not set(os.path.basename(d) for d in data_dir.iterdir()).difference({
+    assert not {os.path.basename(str(d)) for d in data_dir.iterdir()}.difference({
         "bands.json",
         "population.json",
         "guitars.json",
@@ -37,7 +37,7 @@ def test_get_data_dir() -> None:
 
 def test_expected_resource_files():
     expected_set = {os.path.basename(str(f)) for f in list_expected_resource_files()}
-    given_set = set(os.path.basename(str(f)) for f in get_data_dir().iterdir()).union(
+    given_set = {os.path.basename(str(f)) for f in get_data_dir().iterdir()}.union(
         os.path.basename(str(f))
         for f in (get_data_dir() / "yellow_taxi_jan_25_2018").iterdir()
     )
@@ -53,4 +53,4 @@ def test_load_files():
     "resource_name", (resource for resource in get_args(ResourceFile))
 )
 def test_resource_path(resource_name) -> None:
-    path = resource_path(resource_name)
+    _ = resource_path(resource_name)
