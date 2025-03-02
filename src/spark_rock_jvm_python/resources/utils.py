@@ -1,15 +1,28 @@
 import importlib
 import importlib.resources
+import logging
+import os
 from importlib.abc import Traversable
 from io import BytesIO
 from pathlib import Path
-from typing import Literal
+from typing import Literal, get_args
+
+import appdirs
 
 import spark_rock_jvm_python.resources.data as _data_resources
+from spark_rock_jvm_python.config import APP_NAME
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceLoadingError(Exception):
     pass
+
+
+class ResourceDuplicateError(Exception):
+    def __init__(self, resource_name: "ResourceFile | str"):
+        message = f"{resource_name} name already exists in {__package__} pre-loaded data files. Reserved names: {get_args(ResourceFile)}"
+        super().__init__(message)
 
 
 ResourceFile = Literal[
@@ -33,18 +46,41 @@ LoadErrorType = Literal["missing_file", "error_loading"]
 
 
 def get_data_dir() -> Traversable:
+    """Get directory to package resources with pre-included data files"""
     data_dir = importlib.resources.files(_data_resources)
     return data_dir
 
 
-def resource_path(resource: ResourceFile, /) -> Path:
-    data_dir = get_data_dir()
-    if (traversable := data_dir / resource).is_file():
+def make_data_dir_read_only() -> None:
+    data_dir = Path(str(get_data_dir()))
+    for root, dirs, files in os.walk(data_dir):
+        for d in dirs:
+            os.chmod(os.path.join(root, d), 0o555)
+        for f in files:
+            os.chmod(os.path.join(root, f), 0o444)
+
+
+def get_writes_dir() -> Path:
+    """Use app dirs to find appropriate user data writes directory"""
+    writes_dir = Path(appdirs.user_data_dir(APP_NAME))
+    return writes_dir
+
+
+def resource_path(resource: ResourceFile) -> Path:
+    dir = get_data_dir()
+    if (traversable := dir / resource).is_file():
         return Path(str(traversable))
     elif resource == "yellow_taxi_jan_25_2018":
-        return Path(str(data_dir / resource))
+        return Path(str(dir / resource))
     else:
-        raise FileNotFoundError(resource)
+        raise FileNotFoundError(traversable)
+
+
+def write_path(file_name: str, /) -> Path:
+    write_dir = get_writes_dir()
+    if file_name in set(get_args(ResourceFile)):
+        raise ResourceDuplicateError(file_name)
+    return write_dir / file_name
 
 
 def list_expected_resource_files() -> tuple[Traversable, ...]:
