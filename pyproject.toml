@@ -52,8 +52,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 include-package-data = true
 
-
-
 [tool.mypy]
 files = ["src"]
 disallow_untyped_defs = true
@@ -121,3 +119,6 @@ ignore = [
 
 [tool.ruff.format]
 preview = true
+
+[tool.basedpyright]
+reportUnusedCallResult = "none"
