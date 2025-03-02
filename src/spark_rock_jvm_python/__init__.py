@@ -5,3 +5,8 @@ This __init__.py initializes the environment variables needed for running pyspar
 
 import os
 import subprocess
+import sys
+
+from spark_rock_jvm_python.config import setup_config
+
+setup_config()

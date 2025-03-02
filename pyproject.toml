@@ -18,9 +18,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
+    "appdirs>=1.4.4",
     "beartype>=0.20.0",
     "py4j>=0.10.9.7",
     "pyspark>=3.5.4",
+    "pyyaml>=6.0.2",
 ]
 
 [project.urls]
