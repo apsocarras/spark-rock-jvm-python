@@ -5,12 +5,37 @@ A dataframe is:
     - DataFrames have schemas, Rows do not
 
 Spark Scala: Spark data types are explained by case objects it uses internally.
-It does not know the types at compile time but at runtime when Spark evalutes the dataset.
     (in Python, these are the types in pyspark.sql.types)
+Spark does not know the types at compile time but at runtime when Spark evalutes the dataset.
+    (Spark DataSets are type safe)
+
+DataFrames can be arbitrarily wide.
+
+Partitioning and the number of files determines parallelism
+
+DataFrames are Immutable (another dataframe is created via a transformation)
+Transformations:
+    * Narrow: one input partition contributes to at most one output partition (e.g. map)
+    * Wide: input partitions (one or more) create many output partitions (e.g. sort)
+        Wide transformations introduce Shuffles
+
+Computing DataFrames (Spark Jobs)
+* Lazy Evaluation
+* Compiles DF transformations into graph before execution
+* Logical plan = DF dependency graph + narrow/wide transformations sequence
+* Physical plan = optimized sequence of steps for nodes in the cluster (know which nodes will excecute which parts of the transformations)
+* Because it knows plans in advance, it can insert optimizations
+
+Transformations vs Actions:
+* Transformations describe how new DFs are obtained
+* Actions start executing Spark code (e.g. show() count())
+
+
+Shuffle = data exchange between cluster nodes
+    * Occur in wide transformations
 
 Spark Scala: When creating a dataframe manually from rows (tuples), you can't specify a schema because the types *are* known at compile time.
     (Python): There is a schema parameter in spark.createDataFrame()
-
 
 FloatType vs IntegerType:
     - Note that python ints are not cast to FloatType when specifying a schema (see exercises)
