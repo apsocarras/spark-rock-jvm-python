@@ -53,6 +53,12 @@ class Config(AnnotatedDataClassMixin):
         metadata={"example": "/opt/homebrew/opt/apache-spark/libexec"}
     )
     PYSPARK_PYTHON: str = field(metadata={"example": "python3"})
+    JDBC_JAR: str = field(
+        metadata={
+            "example": "~/Downloads/postgresql-42.7.5.jar",
+            "description": "Path to .jar for PostGres JDBC Driver.",
+        },
+    )
 
     @classmethod
     def load(cls) -> "Config":
@@ -121,6 +127,7 @@ def update_path_and_env(config: Config) -> None:
     """Add the env vars to the system PATH"""
 
     os.environ["PYSPARK_PYTHON"] = config.PYSPARK_PYTHON
+    os.environ["JDBC_JAR"] = config.JDBC_JAR
 
     ## Set JAVA_HOME and SPARK_HOME
     def update_var(var_name: str) -> None:

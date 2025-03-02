@@ -218,6 +218,19 @@ def working_with_text(spark: SparkSession):
     spark.read.text(str(sample_text_txt)).show()
 
 
+def working_with_remote_db(spark: SparkSession):
+    print("Ensure your docker postgres container is running")
+    jbdc_options = {
+        "driver": "org.postgresql.Driver",
+        "url": "jdbc:postgresql://localhost:5432/rtjvm",
+        "user": "docker",
+        "password": "docker",
+        "dbtable": "public.employees",
+    }
+    employees_DF = spark.read.format("jdbc").options(**jbdc_options).load()
+    employees_DF.show()
+
+
 @click.command(help="If no flags provided, will run all lessons")
 @click.option(
     "--json", "-j", is_flag=True, default=None, help="Whether to run json lesson"
@@ -231,23 +244,29 @@ def working_with_text(spark: SparkSession):
 @click.option(
     "--text", "-t", is_flag=True, default=None, help="Whether to run text lesson"
 )
+@click.option(
+    "--db", is_flag=True, default=None, help="Whether to run remote_database lesson"
+)
 def main(
     json: bool | None = None,
     csv: bool | None = None,
     parquet: bool | None = None,
     text: bool | None = None,
+    db: bool | None = None,
 ):
     spark: SparkSession = (
         SparkSession.Builder()
         .appName("Data Sources and Formats")
         .config("spark.master", "local")
+        .config("spark.jars", "/Users/alex/Downloads/postgresql-42.7.5.jar")
         .getOrCreate()
     )
-    if all(x is None for x in (json, csv, parquet, text)):
+    if all(x is None for x in (json, csv, parquet, text, db)):
         json = True
         csv = True
         parquet = True
         text = True
+        db = True
 
     if json:
         logger.info("Running lesson for json")
@@ -264,6 +283,10 @@ def main(
     if text:
         logger.info("Running lesson for text")
         working_with_text(spark)
+
+    if db:
+        logger.info("Running lesson for remote database")
+        working_with_remote_db(spark)
 
 
 if __name__ == "__main__":

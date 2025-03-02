@@ -3,8 +3,11 @@ import logging
 import os
 from types import ModuleType
 
-logging.getLogger("faker").setLevel(logging.CRITICAL)
 logging.getLogger("spark_rock_jvm_python").setLevel(logging.DEBUG)
+logging.getLogger("faker").setLevel(logging.CRITICAL)
+logging.getLogger("pyspark").setLevel(logging.CRITICAL)
+logging.getLogger("py4j").setLevel(logging.CRITICAL)
+
 # Configure logging.
 # `export DEBUG=1` to see debug output.
 # `mkdir logs` to write to files too.

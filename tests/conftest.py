@@ -9,6 +9,8 @@ from spark_rock_jvm_python.config import (
     Config,
 )
 
+from . import logging_config
+
 
 @pytest.fixture
 def project_root() -> Path:
@@ -29,6 +31,7 @@ def madeup_config() -> Config:
         JAVA_HOME="foo_openjdk@7",
         SPARK_HOME="apache-spark/bar_exe",
         PYSPARK_PYTHON="python2_whoops",
+        JDBC_JAR="made_up_jar_file",
     )
 
 
@@ -68,3 +71,6 @@ def default_config_path(tmp_path, default_config) -> Path:
     with open(path := tmp_path / "default_config.yaml", "w") as file:
         json.dump(asdict(default_config), file)
     return path
+
+
+logging_config
