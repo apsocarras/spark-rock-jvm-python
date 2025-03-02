@@ -1,12 +1,12 @@
-#!/bin/bash 
+#!/bin/bash
 
-## Prerequisites 
-# Install homebrew 
+## Prerequisites
+# Install homebrew
 # brew install openjdk@17
-# brew install apache-spark 
+# brew install apache-spark
 
 # Set Java variable
-# Edit JAVA_HOME variable to an installation compatible with Spark 
+# Edit JAVA_HOME variable to an installation compatible with Spark
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 
 # Add to $PATH (if not present)
@@ -16,9 +16,9 @@ fi
 
 # Set Spark home and add to $PATH
 export SPARK_HOME="/opt/homebrew/opt/apache-spark/libexec"
-if [[ ":$PATH:" != *":$SPARK_HOME/bin:"* ]]; then 
+if [[ ":$PATH:" != *":$SPARK_HOME/bin:"* ]]; then
     export PATH=$SPARK_HOME/bin:$PATH
-fi 
+fi
 
 # Add PySpark to PYTHONPATH
 if [[ ":$PYTHONPATH:" != *":$SPARK_HOME/python:"* ]]; then
