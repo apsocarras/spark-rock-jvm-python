@@ -37,10 +37,14 @@ def get_data_dir() -> Traversable:
     return data_dir
 
 
-def resource_path(file_name: ResourceFile, /) -> Path | None:
+def resource_path(resource: ResourceFile, /) -> Path:
     data_dir = get_data_dir()
-    if (traversable := data_dir / file_name).is_file():
+    if (traversable := data_dir / resource).is_file():
         return Path(str(traversable))
+    elif resource == "yellow_taxi_jan_25_2018":
+        return Path(str(data_dir / resource))
+    else:
+        raise FileNotFoundError(resource)
 
 
 def list_expected_resource_files() -> tuple[Traversable, ...]:
@@ -55,7 +59,20 @@ def list_expected_resource_files() -> tuple[Traversable, ...]:
         data_dir / "cars.json",
         data_dir / "more_cars.json",
         data_dir / "sample_text.txt",
-        data_dir / "yellow_taxi_jan_25_2018",
+        data_dir / "yellow_taxi_jan_25_2018" / "_SUCCESS",
+        data_dir / "yellow_taxi_jan_25_2018" / "._SUCCESS.crc",
+        data_dir
+        / "yellow_taxi_jan_25_2018"
+        / ".part-00000-5ca10efc-1651-4c8f-896a-3d7d3cc0e925-c000.snappy.parquet.crc",
+        data_dir
+        / "yellow_taxi_jan_25_2018"
+        / ".part-00004-5ca10efc-1651-4c8f-896a-3d7d3cc0e925-c000.snappy.parquet.crc",
+        data_dir
+        / "yellow_taxi_jan_25_2018"
+        / "part-00000-5ca10efc-1651-4c8f-896a-3d7d3cc0e925-c000.snappy.parquet",
+        data_dir
+        / "yellow_taxi_jan_25_2018"
+        / "part-00004-5ca10efc-1651-4c8f-896a-3d7d3cc0e925-c000.snappy.parquet",
         data_dir / "numbers.csv",
         data_dir / "sampleTextFile.txt",
         data_dir / "cars_dates.json",
