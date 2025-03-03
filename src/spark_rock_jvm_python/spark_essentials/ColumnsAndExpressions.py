@@ -10,19 +10,30 @@ SELECT: Narrow Transformation (every input partition in original dataframe has e
 """
 
 from pyspark.sql.column import Column
+from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.functions import col, expr, lit
 from pyspark.sql.session import SparkSession
+from pyspark.sql.types import (
+    DateType,
+    FloatType,
+    IntegerType,
+    LongType,
+    StringType,
+    StructField,
+    StructType,
+)
 
 from spark_rock_jvm_python.resources.utils import resource_path
 
+spark: SparkSession = (
+    SparkSession.Builder()
+    .appName("DF Columns and Expressions")
+    .config("spark.master", "local")
+    .getOrCreate()
+)
 
-def main() -> None:
-    spark = (
-        SparkSession.Builder()
-        .appName("DF Columns and Expressions")
-        .config("spark.master", "local")
-        .getOrCreate()
-    )
+
+def main(spark: SparkSession) -> None:
     cars_df_json = resource_path("cars.json")
     # fmt: off
     carsDF = (
@@ -117,5 +128,123 @@ def main() -> None:
     all_countries_df.show()
 
 
+def exercises(spark: SparkSession):
+    """
+    * Exercises
+    * 1. Read the movies DF and select 2 columns of your choice
+    * 2. Create another column summing up the total profit of the movies = US_Gross + Worldwide_Gross + DVD sales
+    * 3. Select all COMEDY movies with IMDB rating above 6
+    * Use as many versions as possible
+    """
+
+    movies_json = resource_path("movies.json")
+    movie_date_format = "dd-MMM-yy"
+    # Read #1: inferred schema
+    movies_DF = spark.read.json(
+        path=str(movies_json), dateFormat=movie_date_format, mode="failFast"
+    )
+    movies_DF = (
+        spark.read.format("json")
+        .option("inferSchema", True)
+        .option("mode", "failFast")
+        .option("dateFormat", movie_date_format)
+        .option("path", str(movies_json))
+        .load()
+    )
+    option_map: dict[str, bool | str] = {
+        "inferSchema": True,
+        "mode": "failFast",
+        "dateFormat": movie_date_format,
+        "path": str(movies_json),
+    }
+    movies_DF = spark.read.format("json").options(**option_map).load()
+
+    # Read #2: explicit schema
+    movies_schema = StructType([
+        StructField(name="Title", dataType=StringType()),
+        StructField(name="US_Gross", dataType=LongType()),
+        StructField(name="Worldwide_Gross", dataType=LongType()),
+        StructField(name="US_DVD_Sales", dataType=LongType()),
+        StructField(name="Production_Budget", dataType=LongType()),
+        StructField(name="Release_Date", dataType=DateType()),
+        StructField(name="MPAA_Rating", dataType=StringType()),
+        StructField(name="Running_Time_min", dataType=IntegerType()),
+        StructField(name="Distributor", dataType=StringType()),
+        StructField(name="Source", dataType=StringType()),
+        StructField(name="Major_Genre", dataType=StringType()),
+        StructField(name="Creative_Type", dataType=StringType()),
+        StructField(name="Director", dataType=StringType()),
+        StructField(name="Rotten_Tomatoes_Rating", dataType=IntegerType()),
+        StructField(name="IMDB_Rating", dataType=FloatType()),
+        StructField(name="IMDB_Votes", dataType=IntegerType()),
+    ])
+    movies_DF = spark.read.json(
+        path=str(movies_json),
+        schema=movies_schema,
+        dateFormat=movie_date_format,
+        mode="failFast",
+    )
+    movies_DF = (
+        spark.read.format("json")
+        .schema(movies_schema)
+        .option("mode", "failFast")
+        .option("dateFormat", movie_date_format)
+        .option("path", str(movies_json))
+        .load()
+    )
+
+    # 2. Select Two columns of your choice
+    print(movies_DF.select("Title", "US_Gross").take(1))
+    print(movies_DF.select(col("Title"), col("US_Gross")).take(1))
+    print(movies_DF.selectExpr("Title", "US_Gross").take(1))
+    print(movies_DF.select(movies_DF.Title, movies_DF.US_Gross).take(1))
+    print(movies_DF.select(movies_DF["Title"], movies_DF["US_Gross"]).take(1))
+    print(
+        movies_DF.select(
+            movies_DF.colRegex("Title"), movies_DF.colRegex("US_Gross")
+        ).take(1)
+    )
+    print(movies_DF.select(["Title", "US_Gross"]).take(1))
+
+    # 3. Create another column summing total profit: US_Gross + Worldwide_Gross + DVD sales
+    total_profit = "Total_Profit"
+    dvd_col_name = "US_DVD_Sales"
+    ww_gross = "WorldWide_Gross"
+    us_gross = "US_Gross"
+
+    movies_with_total_profit_DF: DataFrame = movies_DF.fillna(
+        cols := {
+            dvd_col_name: 0,
+            ww_gross: 0,
+            us_gross: 0,
+        }
+    ).select("Title", *cols.keys())
+
+    print(
+        movies_with_total_profit_DF.withColumn(
+            total_profit, col(us_gross) + col(ww_gross) + col(dvd_col_name)
+        ).take(1)
+    )
+
+    total_profit_col = (col(us_gross) + col(ww_gross) + col(dvd_col_name)).alias(
+        total_profit
+    )
+    print(movies_with_total_profit_DF.select(col("*"), total_profit_col).take(1))
+
+    print(
+        movies_with_total_profit_DF.selectExpr(
+            "*", f"{us_gross} + {ww_gross} + {dvd_col_name} AS {total_profit}"
+        ).take(1)
+    )
+
+
 if __name__ == "__main__":
-    main()
+    spark: SparkSession = (
+        SparkSession.Builder()
+        .appName("DF Columns and Expressions")
+        .config("spark.master", "local")
+        .getOrCreate()
+    )
+
+    main(spark)
+    exercises(spark)
