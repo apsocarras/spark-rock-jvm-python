@@ -237,6 +237,9 @@ def exercises(spark: SparkSession):
         ).take(1)
     )
 
+    # 4. Select all Comedy movies with IMDB > 6
+    movies_with_total_profit_DF
+
 
 if __name__ == "__main__":
     spark: SparkSession = (
